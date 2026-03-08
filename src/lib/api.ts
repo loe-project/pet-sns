@@ -5,6 +5,59 @@
 import { supabase } from "./supabase";
 import type { FeedPost, FeedResponse, RankingItem, SearchParams } from "./types";
 
+export interface PublishPostInput {
+  description?: string;
+  location?: string;
+  imageUrls: string[];
+}
+
+const LEGACY_LOCAL_FEED_KEY = "pet-sns-local-feed-posts";
+
+function readLegacyLocalFeedPosts(): FeedPost[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(LEGACY_LOCAL_FEED_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Array<{
+      id?: string;
+      description?: string;
+      location?: string;
+      createdAt?: string;
+      images?: string[];
+    }>;
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .filter((post) => Array.isArray(post.images) && post.images.length > 0)
+      .map((post, idx) => ({
+        id: post.id ?? `legacy-${idx}-${Date.now()}`,
+        author: {
+          id: "legacy-local",
+          nickname: "나",
+          profile_image_url: undefined,
+          level: 1,
+        },
+        images: (post.images ?? [])
+          .filter((url) => typeof url === "string" && url.trim().length > 0)
+          .map((url) => ({ url })),
+        pet: {
+          name: "내 반려동물",
+          breed: "",
+        },
+        description: post.description ?? "",
+        location: post.location,
+        createdAt: post.createdAt ?? new Date().toISOString(),
+        stats: {
+          views: 0,
+          likes: 0,
+        },
+      }))
+      .filter((post) => post.images.length > 0);
+  } catch {
+    return [];
+  }
+}
+
 /** Feed list with pagination */
 export async function fetchFeed(cursor?: string, limit = 20): Promise<FeedResponse> {
   const offset = cursor ? parseInt(cursor, 10) : 0;
@@ -71,12 +124,100 @@ export async function fetchFeed(cursor?: string, limit = 20): Promise<FeedRespon
 
   const nextOffset = offset + feedPosts.length;
   const hasMore = feedPosts.length === limit;
+  const legacyLocalPosts = offset === 0 ? readLegacyLocalFeedPosts() : [];
 
   return {
-    data: feedPosts,
+    data: offset === 0 ? [...legacyLocalPosts, ...feedPosts] : feedPosts,
     nextCursor: String(nextOffset),
     hasMore,
   };
+}
+
+async function ensureAuthorProfileId(): Promise<string> {
+  const { data: existing } = (await (supabase
+    .from("profiles")
+    .select("id")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle())) as any;
+
+  if (existing?.id) return existing.id;
+
+  const { data, error } = await (supabase.from("profiles") as any)
+    .insert({
+      email: `guest-${Date.now()}@pet-sns.local`,
+      nickname: "게스트",
+      profile_image_url: null,
+      role: "user",
+      status: "active",
+    })
+    .select("id")
+    .single();
+
+  if (error || !data?.id) throw new Error("프로필 생성에 실패했습니다.");
+  return data.id;
+}
+
+async function ensurePrimaryPetId(userId: string): Promise<string> {
+  const { data: existing } = (await (supabase
+    .from("pets")
+    .select("id")
+    .eq("user_id", userId)
+    .order("is_primary", { ascending: false })
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle())) as any;
+
+  if (existing?.id) return existing.id;
+
+  const { data, error } = await (supabase.from("pets") as any)
+    .insert({
+      user_id: userId,
+      name: "내 반려동물",
+      breed_id: null,
+      breed_name: "미지정",
+      age: null,
+      profile_image_url: null,
+      is_primary: true,
+    })
+    .select("id")
+    .single();
+
+  if (error || !data?.id) throw new Error("반려동물 생성에 실패했습니다.");
+  return data.id;
+}
+
+/** Publish post to actual Supabase tables (posts, post_images) */
+export async function publishPost(input: PublishPostInput): Promise<string> {
+  const imageUrls = input.imageUrls.filter((url) => typeof url === "string" && url.trim().length > 0);
+  if (imageUrls.length === 0) throw new Error("이미지가 없습니다.");
+
+  const authorId = await ensureAuthorProfileId();
+  const petId = await ensurePrimaryPetId(authorId);
+
+  const { data: post, error: postError } = await (supabase.from("posts") as any)
+    .insert({
+      author_id: authorId,
+      pet_id: petId,
+      description: input.description?.trim() || null,
+      location: input.location?.trim() || null,
+      status: "published",
+    })
+    .select("id")
+    .single();
+
+  if (postError || !post?.id) throw new Error("게시글 저장에 실패했습니다.");
+
+  const imageRows = imageUrls.map((url, index) => ({
+    post_id: post.id,
+    url,
+    thumbnail_url: null,
+    sort_order: index,
+  }));
+  const { error: imageError } = await (supabase.from("post_images") as any).insert(imageRows);
+  if (imageError) throw new Error("게시글 이미지 저장에 실패했습니다.");
+
+  return post.id as string;
 }
 
 /** Feed detail */

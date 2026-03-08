@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Heart, MapPin, Crown, Bell } from "lucide-react";
 import { fetchFeed, fetchRankingMonthly } from "@/lib/api";
+import { FEED_PLACEHOLDER_SRC, getValidImageUrls } from "@/lib/feed-image";
 import { MobileLayout } from "@/components/layout/MobileLayout";
 import { useLikes } from "@/lib/likes-context";
 
@@ -35,28 +36,38 @@ export default function HomePage() {
   });
 
   const tabs = (
-    <div className="flex items-center">
+    <div className="flex w-full items-end border-b border-gray-200" role="tablist" aria-label="메인 피드 탭">
       <button
         type="button"
         onClick={() => setActiveTab("today")}
-        className={`flex h-[39px] w-[89px] items-center justify-center border text-[16px] font-semibold leading-[20.8px] transition-colors ${
-          activeTab === "today"
-            ? "border-brand text-brand"
-            : "border-transparent text-[#8f9dab]"
+        role="tab"
+        id="tab-today"
+        aria-selected={activeTab === "today"}
+        aria-controls="panel-today"
+        className={`relative h-[39px] w-[89px] px-2 text-left text-[16px] font-semibold leading-[20.8px] transition-colors ${
+          activeTab === "today" ? "text-brand" : "text-[#8f9dab]"
         }`}
       >
         투데이 멍냥
+        {activeTab === "today" && (
+          <span className="absolute inset-x-0 -bottom-px h-0.5 bg-brand" />
+        )}
       </button>
       <button
         type="button"
         onClick={() => setActiveTab("monthly")}
-        className={`flex h-[39px] w-[89px] items-center justify-center border text-[16px] font-semibold leading-[20.8px] transition-colors ${
-          activeTab === "monthly"
-            ? "border-brand text-brand"
-            : "border-transparent text-[#8f9dab]"
+        role="tab"
+        id="tab-monthly"
+        aria-selected={activeTab === "monthly"}
+        aria-controls="panel-monthly"
+        className={`relative h-[39px] w-[89px] px-2 text-left text-[16px] font-semibold leading-[20.8px] transition-colors ${
+          activeTab === "monthly" ? "text-brand" : "text-[#8f9dab]"
         }`}
       >
         이달의 멍냥
+        {activeTab === "monthly" && (
+          <span className="absolute inset-x-0 -bottom-px h-0.5 bg-brand" />
+        )}
       </button>
     </div>
   );
@@ -77,12 +88,64 @@ export default function HomePage() {
         {tabs}
       </div>
 
-      {activeTab === "today" ? (
-        <TodayFeed feed={feed} />
-      ) : (
-        <MonthlyRanking ranking={ranking} />
+      {activeTab === "today" && (
+        <div role="tabpanel" id="panel-today" aria-labelledby="tab-today">
+          <TodayFeed feed={feed} />
+        </div>
+      )}
+      {activeTab === "monthly" && (
+        <div role="tabpanel" id="panel-monthly" aria-labelledby="tab-monthly">
+          <MonthlyRanking ranking={ranking} />
+        </div>
       )}
     </MobileLayout>
+  );
+}
+
+function SafeFeedImage({
+  images,
+  alt,
+  sizes,
+  showDots = true,
+  priority = false,
+}: {
+  images: Array<{ url?: string | null }> | undefined;
+  alt: string;
+  sizes: string;
+  showDots?: boolean;
+  priority?: boolean;
+}) {
+  const validUrls = getValidImageUrls(images);
+  const [src, setSrc] = useState(validUrls[0] ?? FEED_PLACEHOLDER_SRC);
+
+  useEffect(() => {
+    setSrc(validUrls[0] ?? FEED_PLACEHOLDER_SRC);
+  }, [validUrls]);
+
+  return (
+    <>
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes={sizes}
+        className="object-cover"
+        priority={priority}
+        onError={() => {
+          if (src !== FEED_PLACEHOLDER_SRC) setSrc(FEED_PLACEHOLDER_SRC);
+        }}
+      />
+      {showDots && validUrls.length > 1 && (
+        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-[4px]">
+          {validUrls.map((_, idx) => (
+            <div
+              key={idx}
+              className={`h-1.5 w-[15px] rounded-full ${idx === 0 ? "bg-white/80" : "bg-white/40"}`}
+            />
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 
@@ -126,6 +189,7 @@ function TodayFeed({ feed }: { feed: ReturnType<typeof useInfiniteQuery<any>> })
       {posts.map((post: any) => (
         <FeedCard key={post.id} post={post} isLiked={isLiked(post.id)} onToggleLike={() => toggle(post.id)} />
       ))}
+      {!isLoading && !error && posts.length === 0 && <PlaceholderFeedCard />}
 
       {/* 무한 스크롤 sentinel */}
       <div ref={sentinelRef} className="h-4" aria-hidden />
@@ -135,6 +199,25 @@ function TodayFeed({ feed }: { feed: ReturnType<typeof useInfiniteQuery<any>> })
         </div>
       )}
     </div>
+  );
+}
+
+function PlaceholderFeedCard() {
+  return (
+    <article className="overflow-hidden bg-white">
+      <div className="relative aspect-[9/10] w-full bg-gray-100">
+        <SafeFeedImage
+          images={undefined}
+          alt="Placeholder image"
+          sizes="(max-width: 360px) 100vw, 360px"
+          showDots={false}
+        />
+      </div>
+
+      <div className="bg-white px-3 py-3 text-center">
+        <p className="text-body-sm text-gray-500">게시물을 업로드해주세요!</p>
+      </div>
+    </article>
   );
 }
 
@@ -150,12 +233,10 @@ function FeedCard({
   return (
     <article className="overflow-hidden bg-white">
       <div className="relative aspect-[9/10] w-full bg-gray-100">
-        <Image
-          src={post.images[0]?.url ?? ""}
+        <SafeFeedImage
+          images={post.images}
           alt={post.pet.name}
-          fill
           sizes="(max-width: 360px) 100vw, 360px"
-          className="object-cover"
         />
         <button
           type="button"
@@ -170,16 +251,6 @@ function FeedCard({
             className={isLiked ? "text-brand" : ""}
           />
         </button>
-        {post.images.length > 1 && (
-          <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-[4px]">
-            {post.images.map((_: any, idx: number) => (
-              <div
-                key={idx}
-                className={`h-1.5 w-[15px] rounded-full ${idx === 0 ? "bg-white/80" : "bg-white/40"}`}
-              />
-            ))}
-          </div>
-        )}
       </div>
 
       <div className="bg-white px-3 py-2.5">
@@ -225,12 +296,11 @@ function MonthlyRanking({ ranking }: { ranking: ReturnType<typeof useQuery<any>>
       {data?.map((item: any) => (
         <article key={item.post.id} className="overflow-hidden bg-white">
           <div className="relative aspect-[9/10] w-full bg-gray-100">
-            <Image
-              src={item.post.images[0]?.url ?? ""}
+            <SafeFeedImage
+              images={item.post.images}
               alt={`${item.rank}위 ${item.post.pet.name}`}
-              fill
               sizes="(max-width: 360px) 100vw, 360px"
-              className="object-cover"
+              showDots={false}
             />
             {item.rank <= 3 && (
               <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-1 backdrop-blur-sm">

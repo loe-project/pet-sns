@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search as SearchIcon, LayoutGrid } from "lucide-react";
 import { fetchSearch, fetchPopularTags } from "@/lib/api";
+import { pickFeedImage } from "@/lib/feed-image";
 import type { SearchFilterType } from "@/lib/types";
 import { MobileLayout } from "@/components/layout/MobileLayout";
 import Image from "next/image";
@@ -115,7 +116,7 @@ export default function SearchPage() {
                 style={{ height: h }}
               >
                 <Image
-                  src={post.images[0]?.url ?? ""}
+                  src={pickFeedImage(post.images)}
                   alt={post.pet.name}
                   fill
                   sizes="50vw"

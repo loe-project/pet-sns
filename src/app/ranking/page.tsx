@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { Heart, Crown } from "lucide-react";
 import { fetchRankingMonthly } from "@/lib/api";
+import { pickFeedImage } from "@/lib/feed-image";
 import { MobileLayout } from "@/components/layout/MobileLayout";
 
 export default function RankingPage() {
@@ -40,7 +41,7 @@ export default function RankingPage() {
               <div className="relative overflow-hidden rounded-xl">
                 <div className="relative aspect-[4/3] w-full">
                   <Image
-                    src={data[0].post.images[0]?.url ?? ""}
+                    src={pickFeedImage(data[0].post.images)}
                     alt={`1위 ${data[0].post.pet.name}`}
                     fill
                     sizes="100vw"
@@ -72,7 +73,7 @@ export default function RankingPage() {
                   <div className="overflow-hidden rounded-xl bg-white">
                     <div className="relative aspect-square w-full">
                       <Image
-                        src={item.post.images[0]?.url ?? ""}
+                        src={pickFeedImage(item.post.images)}
                         alt={`${item.rank}위 ${item.post.pet.name}`}
                         fill
                         sizes="50vw"

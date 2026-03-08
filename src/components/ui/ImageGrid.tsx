@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { FEED_PLACEHOLDER_SRC } from "@/lib/feed-image";
 
 interface GridItem {
   id: string;
@@ -31,12 +33,10 @@ export function ImageGrid({
       {items.map((item) => {
         const content = (
           <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
-            <Image
+            <GridImage
               src={item.imageUrl}
               alt={item.alt ?? "게시물 이미지"}
-              fill
               sizes={columns === 2 ? "50vw" : "33vw"}
-              className="object-cover"
             />
           </div>
         );
@@ -55,5 +55,27 @@ export function ImageGrid({
         );
       })}
     </div>
+  );
+}
+
+function GridImage({ src, alt, sizes }: { src: string; alt: string; sizes: string }) {
+  const normalized = src && src.trim().length > 0 ? src : FEED_PLACEHOLDER_SRC;
+  const [safeSrc, setSafeSrc] = useState(normalized);
+
+  useEffect(() => {
+    setSafeSrc(normalized);
+  }, [normalized]);
+
+  return (
+    <Image
+      src={safeSrc}
+      alt={alt}
+      fill
+      sizes={sizes}
+      className="object-cover"
+      onError={() => {
+        if (safeSrc !== FEED_PLACEHOLDER_SRC) setSafeSrc(FEED_PLACEHOLDER_SRC);
+      }}
+    />
   );
 }

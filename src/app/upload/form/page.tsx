@@ -7,6 +7,7 @@ import Image from "next/image";
 import { ArrowLeft, Calendar, MapPin, Tag, Pencil } from "lucide-react";
 import { MobileLayout } from "@/components/layout/MobileLayout";
 import { useUpload } from "@/lib/upload-context";
+import { publishPost } from "@/lib/api";
 
 export default function UploadFormPage() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function UploadFormPage() {
   const [location, setLocation] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
-  const [hidePetName, setHidePetName] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const addTag = () => {
     const trimmed = tagInput.trim().replace(/^#/, "");
@@ -34,9 +35,38 @@ export default function UploadFormPage() {
     setTags((prev) => prev.filter((t) => t !== tag));
   };
 
-  const handlePublish = () => {
-    clear();
-    router.push("/");
+  const fileToDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result ?? ""));
+      reader.onerror = () => reject(new Error("이미지를 읽지 못했습니다."));
+      reader.readAsDataURL(file);
+    });
+
+  const handlePublish = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const imageUrls = await Promise.all(
+        images.map(async (img) => {
+          if (img.file) return fileToDataUrl(img.file);
+          return img.url;
+        })
+      );
+      await publishPost({
+        description,
+        location,
+        imageUrls,
+      });
+      clear();
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error("publish error:", error);
+      window.alert("게시에 실패했어요. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (images.length === 0) {
@@ -73,9 +103,10 @@ export default function UploadFormPage() {
         <button
           type="button"
           onClick={handlePublish}
-          className="text-body-sm font-medium text-coolGray-600"
+          disabled={isSubmitting}
+          className="text-body-sm font-medium text-coolGray-600 disabled:opacity-40"
         >
-          완료
+          {isSubmitting ? "게시 중..." : "완료"}
         </button>
       }
     >
@@ -187,30 +218,6 @@ export default function UploadFormPage() {
             </div>
           </div>
 
-          {/* 반려동물 이름 미표기 */}
-          <div className="flex items-center justify-between px-4 py-3">
-            <div>
-              <p className="text-body-sm text-neutral-black-800">반려동물 이름 미표기</p>
-              <p className="text-[10px] text-gray-500">
-                선택하면 게시글에 반려동물 이름이 보이지 않아요
-              </p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={hidePetName}
-              onClick={() => setHidePetName(!hidePetName)}
-              className={`relative h-[34px] w-[58px] shrink-0 rounded-full transition-colors ${
-                hidePetName ? "bg-brand" : "bg-gray-300"
-              }`}
-            >
-              <span
-                className={`absolute top-1 h-[26px] w-[26px] rounded-full bg-white shadow transition-transform ${
-                  hidePetName ? "translate-x-[28px]" : "translate-x-1"
-                }`}
-              />
-            </button>
-          </div>
         </div>
 
         {/* Bottom buttons — Figma: 취소 (outlined) + 게시하기 (filled dark) */}
@@ -224,9 +231,10 @@ export default function UploadFormPage() {
           <button
             type="button"
             onClick={handlePublish}
-            className="flex h-9 flex-1 items-center justify-center rounded-md bg-neutral-black-800 text-body-sm font-medium text-white active:bg-neutral-black-800/90"
+            disabled={isSubmitting}
+            className="flex h-9 flex-1 items-center justify-center rounded-md bg-neutral-black-800 text-body-sm font-medium text-white active:bg-neutral-black-800/90 disabled:opacity-40"
           >
-            게시하기
+            {isSubmitting ? "게시 중..." : "게시하기"}
           </button>
         </div>
       </div>

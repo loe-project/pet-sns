@@ -1,0 +1,9 @@
+<svg width="1080" height="1080" viewBox="0 0 1080 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1080" height="1080" fill="#E5EAF1"/>
+  <circle cx="540" cy="420" r="120" fill="#CBD5E1"/>
+  <rect x="220" y="620" width="640" height="40" rx="20" fill="#CBD5E1"/>
+  <rect x="300" y="690" width="480" height="30" rx="15" fill="#D5DEE8"/>
+  <text x="540" y="830" text-anchor="middle" fill="#8F9DAB" font-size="44" font-family="Pretendard, Arial, sans-serif">
+    Placeholder image
+  </text>
+</svg>

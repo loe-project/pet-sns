@@ -10,6 +10,7 @@ import { useUpload } from "@/lib/upload-context";
 export default function UploadPage() {
   const { images, addFiles, removeImage, reorder } = useUpload();
   const [activeSource, setActiveSource] = useState<"gallery" | "camera" | null>(null);
+  const [dragFromIdx, setDragFromIdx] = useState<number | null>(null);
 
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -25,6 +26,7 @@ export default function UploadPage() {
   };
 
   const handleDragStart = (e: React.DragEvent, fromIdx: number) => {
+    setDragFromIdx(fromIdx);
     e.dataTransfer.setData("text/plain", String(fromIdx));
     e.dataTransfer.effectAllowed = "move";
   };
@@ -33,6 +35,28 @@ export default function UploadPage() {
     e.preventDefault();
     const fromIdx = parseInt(e.dataTransfer.getData("text/plain"), 10);
     if (!Number.isNaN(fromIdx)) reorder(fromIdx, toIdx);
+    setDragFromIdx(null);
+  };
+  const handleDragEnd = () => setDragFromIdx(null);
+
+  const handleTouchStart = (fromIdx: number) => {
+    setDragFromIdx(fromIdx);
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (dragFromIdx == null) return;
+    const touch = e.touches[0];
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    const dropEl = target?.closest("[data-upload-drop-idx]");
+    if (!dropEl) return;
+    const toIdxAttr = dropEl.getAttribute("data-upload-drop-idx");
+    const toIdx = toIdxAttr ? parseInt(toIdxAttr, 10) : NaN;
+    if (!Number.isNaN(toIdx) && toIdx !== dragFromIdx) {
+      reorder(dragFromIdx, toIdx);
+      setDragFromIdx(toIdx);
+    }
+  };
+  const handleTouchEnd = () => {
+    setDragFromIdx(null);
   };
 
   const coverImage = images[0]?.url ?? null;
@@ -136,11 +160,18 @@ export default function UploadPage() {
               {images.map((img, displayIdx) => (
                 <div
                   key={img.id}
+                  data-upload-drop-idx={displayIdx}
                   draggable
                   onDragStart={(e) => handleDragStart(e, displayIdx)}
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, displayIdx)}
-                  className="relative h-20 w-20 shrink-0 cursor-grab overflow-hidden rounded-lg border-2 border-brand active:cursor-grabbing"
+                  onDragEnd={handleDragEnd}
+                  onTouchStart={() => handleTouchStart(displayIdx)}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  className={`relative h-20 w-20 shrink-0 cursor-grab overflow-hidden rounded-lg border-2 active:cursor-grabbing ${
+                    dragFromIdx === displayIdx ? "border-brand ring-2 ring-brand/30" : "border-brand"
+                  }`}
                 >
                   <Image
                     src={img.url}

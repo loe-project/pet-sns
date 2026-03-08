@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Share2, Heart, MapPin, PawPrint, UserPlus, UserCheck } from "lucide-react";
 import { fetchFeedDetail } from "@/lib/api";
+import { FEED_PLACEHOLDER_SRC, getValidImageUrls } from "@/lib/feed-image";
 import { useLikes } from "@/lib/likes-context";
 
 function formatDate(iso: string) {
@@ -29,6 +30,12 @@ export default function DetailPage() {
   const { isLiked, toggle } = useLikes();
   const [isFollowing, setIsFollowing] = useState(false);
   const liked = post ? isLiked(post.id) : false;
+  const validImageUrls = getValidImageUrls(post?.images);
+  const [imageSrc, setImageSrc] = useState(validImageUrls[0] ?? FEED_PLACEHOLDER_SRC);
+
+  useEffect(() => {
+    setImageSrc(validImageUrls[0] ?? FEED_PLACEHOLDER_SRC);
+  }, [validImageUrls]);
 
   return (
     <div className="mx-auto min-h-dvh max-w-mobile bg-white">
@@ -51,12 +58,15 @@ export default function DetailPage() {
           <div className="relative w-full">
             <div className="relative aspect-[3/4] w-full overflow-hidden rounded-b-2xl bg-gray-100">
               <Image
-                src={post.images[0]?.url ?? ""}
+                src={imageSrc}
                 alt={post.pet.name}
                 fill
                 sizes="100vw"
                 className="object-cover"
                 priority
+                onError={() => {
+                  if (imageSrc !== FEED_PLACEHOLDER_SRC) setImageSrc(FEED_PLACEHOLDER_SRC);
+                }}
               />
 
               {/* Back button overlay */}
@@ -97,9 +107,9 @@ export default function DetailPage() {
               </button>
 
               {/* Swipe dots */}
-              {post.images.length > 1 && (
+              {validImageUrls.length > 1 && (
                 <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
-                  {post.images.map((_, idx) => (
+                  {validImageUrls.map((_, idx) => (
                     <div
                       key={idx}
                       className={`h-1.5 w-1.5 rounded-full ${
