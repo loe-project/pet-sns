@@ -1,4 +1,4 @@
-export const FEED_PLACEHOLDER_SRC = "/placeholder-feed.svg";
+export const FEED_PLACEHOLDER_SRC = "/placeholder-image1.png";
 
 type FeedImageLike = { url?: string | null } | null | undefined;
 
