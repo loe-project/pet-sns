@@ -149,16 +149,46 @@ function getFallbackFeedPosts(): FeedPost[] {
 }
 
 function getFallbackMonthlyRanking(): RankingItem[] {
-  return getFallbackFeedPosts().map((post, index) => ({
-    rank: index + 1,
-    post: {
-      ...post,
-      stats: {
-        views: post.stats?.views ?? 0,
-        likes: 100 - index * 7,
+  const imagePool = [
+    "/placeholder-image1.png",
+    "/placeholder-image2.png",
+    "/placeholder-image3.png",
+    "/placeholder-image4.png",
+  ];
+  const petNames = ["누룽지", "꼬순이", "몽실이", "보리", "초코", "구름이", "두부", "콩이"];
+  const nicknames = ["룽지맘", "꼬순맘", "몽실이네", "보리아빠", "초코집사", "구름이네", "두부맘", "콩이맘"];
+  const figmaDate = "2025-05-01T00:00:00.000Z";
+
+  return Array.from({ length: 12 }, (_, index) => {
+    const petName = petNames[index % petNames.length] ?? "반려동물";
+    const nickname = nicknames[index % nicknames.length] ?? "보호자";
+    const imageUrl = imagePool[index % imagePool.length] ?? "/placeholder-image1.png";
+
+    return {
+      rank: index + 1,
+      post: {
+        id: `fallback-ranking-${index + 1}`,
+        author: {
+          id: `fallback-ranking-author-${index + 1}`,
+          nickname,
+          profile_image_url: undefined,
+          level: 1,
+        },
+        images: [{ url: imageUrl }],
+        pet: {
+          name: petName,
+          breed: "믹스",
+        },
+        description: "이달의 멍냥 랭킹",
+        location: "제주도",
+        createdAt: figmaDate,
+        stats: {
+          views: 0,
+          likes: 120 - index * 6,
+        },
       },
-    },
-  }));
+    };
+  });
 }
 
 /** Feed list with pagination */
@@ -469,6 +499,20 @@ export async function fetchRankingMonthly(): Promise<RankingItem[]> {
 
   if (rankingItems.length === 0) {
     return getFallbackMonthlyRanking();
+  }
+
+  if (rankingItems.length < 10) {
+    const fallback = getFallbackMonthlyRanking();
+    const needed = 10 - rankingItems.length;
+    const extra = fallback.slice(0, needed).map((item, idx) => ({
+      ...item,
+      rank: rankingItems.length + idx + 1,
+      post: {
+        ...item.post,
+        id: `${item.post.id}-extra-${rankingItems.length + idx + 1}`,
+      },
+    }));
+    return [...rankingItems, ...extra];
   }
 
   return rankingItems;

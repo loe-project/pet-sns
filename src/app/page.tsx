@@ -287,14 +287,14 @@ function MonthlyRanking({ ranking }: { ranking: ReturnType<typeof useQuery<any>>
 
       {items.length > 0 && (
         <>
-          <div className="overflow-x-auto px-4 pb-3 pt-2">
-            <div className="flex w-max gap-2">
+          <div className="overflow-x-auto overscroll-x-contain px-4 pb-3 pt-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex w-max snap-x snap-mandatory gap-2">
               {items.slice(0, 3).map((item: any, idx: number) => {
                 const featured = idx === 0;
                 return (
                   <article
                     key={`top-${item.post.id}`}
-                    className={`shrink-0 overflow-hidden bg-white ${featured ? "w-[324px]" : "w-[270px]"}`}
+                    className={`shrink-0 snap-start overflow-hidden bg-white ${featured ? "w-[324px]" : "w-[270px]"}`}
                   >
                     <div className={`relative w-full bg-gray-100 ${featured ? "h-[360px]" : "h-[300px]"}`}>
                       <SafeFeedImage
@@ -303,9 +303,15 @@ function MonthlyRanking({ ranking }: { ranking: ReturnType<typeof useQuery<any>>
                         sizes={featured ? "(max-width: 360px) 90vw, 324px" : "(max-width: 360px) 75vw, 270px"}
                         showDots
                       />
-                      <div className="absolute left-3 top-3 flex items-center rounded-full bg-black/50 px-2 py-1 text-[12px] leading-none text-white">
-                        {rankLabel(item.rank)}
-                      </div>
+                      {featured ? (
+                        <div className="absolute left-4 top-4 flex h-[33px] w-[33px] items-center justify-center rounded-full bg-[#656565]/85 text-[13px] font-semibold leading-none text-white shadow-sm">
+                          {rankLabel(item.rank)}
+                        </div>
+                      ) : (
+                        <div className="absolute left-3 top-3 flex h-7 min-w-7 items-center justify-center rounded-full bg-black/50 px-1.5 text-[11px] font-semibold leading-none text-white">
+                          {rankLabel(item.rank)}
+                        </div>
+                      )}
                       <button
                         type="button"
                         className={`absolute text-white drop-shadow-md transition-transform active:scale-110 ${
@@ -325,7 +331,7 @@ function MonthlyRanking({ ranking }: { ranking: ReturnType<typeof useQuery<any>>
                     <div className={`bg-white px-3 ${featured ? "h-[43px] py-[2px]" : "h-[35px] py-[2px]"}`}>
                       <div className="flex items-center justify-between">
                         <span className={`flex items-center gap-1 font-semibold text-brand ${featured ? "text-[18px] leading-[23px]" : "text-[14px] leading-[18px]"}`}>
-                          {item.rank <= 3 && <Crown size={featured ? 16 : 12} className="text-brand" fill="currentColor" />}
+                          {featured && <Crown size={16} className="text-brand" fill="currentColor" />}
                           {item.post.pet.name}
                         </span>
                         <span className={`${featured ? "text-[14px] leading-[18px]" : "text-[12px] leading-[16px]"} text-[#3d4854]`}>
@@ -345,7 +351,7 @@ function MonthlyRanking({ ranking }: { ranking: ReturnType<typeof useQuery<any>>
           </div>
 
           <div className="grid grid-cols-2 gap-[10px] px-4">
-            {items.slice(3).map((item: any) => (
+            {items.slice(3, 11).map((item: any) => (
               <article key={item.post.id} className="overflow-hidden bg-white">
                 <div className="relative h-[191px] w-full bg-gray-100">
                   <SafeFeedImage
