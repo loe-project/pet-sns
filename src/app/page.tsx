@@ -11,6 +11,32 @@ import { MobileLayout } from "@/components/layout/MobileLayout";
 import { useLikes } from "@/lib/likes-context";
 
 type Tab = "today" | "monthly";
+const EMPTY_FEED_FALLBACK_POSTS = [
+  {
+    id: "sample-1",
+    pet: { name: "누룽지" },
+    author: { nickname: "룽지맘" },
+    location: "제주도",
+    createdAt: "2025-05-01T00:00:00.000Z",
+    images: [{ url: "/deco-smile-1.svg" }],
+  },
+  {
+    id: "sample-2",
+    pet: { name: "숑이" },
+    author: { nickname: "숑맘" },
+    location: "서울",
+    createdAt: "2025-05-01T00:00:00.000Z",
+    images: [{ url: "/deco-smile-2.svg" }],
+  },
+  {
+    id: "sample-3",
+    pet: { name: "코코" },
+    author: { nickname: "냥집사" },
+    location: "부산",
+    createdAt: "2025-05-01T00:00:00.000Z",
+    images: [{ url: "/deco-cat-peek.svg" }],
+  },
+];
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -189,7 +215,18 @@ function TodayFeed({ feed }: { feed: ReturnType<typeof useInfiniteQuery<any>> })
       {posts.map((post: any) => (
         <FeedCard key={post.id} post={post} isLiked={isLiked(post.id)} onToggleLike={() => toggle(post.id)} />
       ))}
-      {!isLoading && !error && posts.length === 0 && <PlaceholderFeedCard />}
+      {!isLoading && !error && posts.length === 0 && (
+        <>
+          {EMPTY_FEED_FALLBACK_POSTS.map((post) => (
+            <FeedCard
+              key={post.id}
+              post={post}
+              isLiked={isLiked(post.id)}
+              onToggleLike={() => toggle(post.id)}
+            />
+          ))}
+        </>
+      )}
 
       {/* 무한 스크롤 sentinel */}
       <div ref={sentinelRef} className="h-4" aria-hidden />
@@ -199,25 +236,6 @@ function TodayFeed({ feed }: { feed: ReturnType<typeof useInfiniteQuery<any>> })
         </div>
       )}
     </div>
-  );
-}
-
-function PlaceholderFeedCard() {
-  return (
-    <article className="overflow-hidden bg-white">
-      <div className="relative aspect-[9/10] w-full bg-gray-100">
-        <SafeFeedImage
-          images={undefined}
-          alt="Placeholder image"
-          sizes="(max-width: 360px) 100vw, 360px"
-          showDots={false}
-        />
-      </div>
-
-      <div className="bg-white px-3 py-3 text-center">
-        <p className="text-body-sm text-gray-500">게시물을 업로드해주세요!</p>
-      </div>
-    </article>
   );
 }
 
