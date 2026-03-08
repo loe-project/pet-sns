@@ -233,17 +233,17 @@ function FeedCard({
         </button>
       </div>
 
-      <div className="bg-white px-3 py-4">
+      <div className="bg-white px-3 pb-4 pt-4">
         {/* 1행: 펫이름 / 날짜 */}
         <div className="flex items-center justify-between">
           <span className="text-[18px] font-semibold leading-[23.4px] text-brand">{post.pet.name}</span>
           <span className="text-[14px] leading-[18.2px] text-[#3d4854]">{formatDate(post.createdAt)}</span>
         </div>
         {/* 2행: 닉네임 / 위치 */}
-        <div className="flex items-center justify-between">
+        <div className="mt-1 flex items-center justify-between">
           <span className="text-[14px] leading-[18.2px] text-[#3d4854]">{post.author.nickname}</span>
           {post.location && (
-            <span className="flex items-center gap-0.5 text-[12px] leading-6 tracking-[0.5px] text-black">
+            <span className="flex items-center gap-0.5 text-[12px] leading-[18.2px] tracking-[0.5px] text-black">
               <MapPin size={12} strokeWidth={1.5} />
               {post.location}
             </span>
