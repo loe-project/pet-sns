@@ -69,7 +69,7 @@ function getFallbackFeedPosts(): FeedPost[] {
         profile_image_url: undefined,
         level: 1,
       },
-      images: [{ url: "/deco-smile-1.svg" }],
+      images: [{ url: "/placeholder-image1.png" }],
       pet: {
         name: "누룽지",
         breed: "믹스",
@@ -90,7 +90,7 @@ function getFallbackFeedPosts(): FeedPost[] {
         profile_image_url: undefined,
         level: 1,
       },
-      images: [{ url: "/deco-smile-2.svg" }],
+      images: [{ url: "/placeholder-image2.png" }],
       pet: {
         name: "숑이",
         breed: "말티즈",
@@ -111,7 +111,7 @@ function getFallbackFeedPosts(): FeedPost[] {
         profile_image_url: undefined,
         level: 1,
       },
-      images: [{ url: "/deco-cat-peek.svg" }],
+      images: [{ url: "/placeholder-image3.png" }],
       pet: {
         name: "코코",
         breed: "코리안 숏헤어",

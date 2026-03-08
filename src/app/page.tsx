@@ -18,7 +18,7 @@ const EMPTY_FEED_FALLBACK_POSTS = [
     author: { nickname: "룽지맘" },
     location: "제주도",
     createdAt: "2025-05-01T00:00:00.000Z",
-    images: [{ url: "/deco-smile-1.svg" }],
+    images: [{ url: "/placeholder-image1.png" }],
   },
   {
     id: "sample-2",
@@ -26,7 +26,7 @@ const EMPTY_FEED_FALLBACK_POSTS = [
     author: { nickname: "숑맘" },
     location: "서울",
     createdAt: "2025-05-01T00:00:00.000Z",
-    images: [{ url: "/deco-smile-2.svg" }],
+    images: [{ url: "/placeholder-image2.png" }],
   },
   {
     id: "sample-3",
@@ -34,7 +34,7 @@ const EMPTY_FEED_FALLBACK_POSTS = [
     author: { nickname: "냥집사" },
     location: "부산",
     createdAt: "2025-05-01T00:00:00.000Z",
-    images: [{ url: "/deco-cat-peek.svg" }],
+    images: [{ url: "/placeholder-image3.png" }],
   },
 ];
 
