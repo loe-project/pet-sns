@@ -11,32 +11,6 @@ import { MobileLayout } from "@/components/layout/MobileLayout";
 import { useLikes } from "@/lib/likes-context";
 
 type Tab = "today" | "monthly";
-const EMPTY_FEED_FALLBACK_POSTS = [
-  {
-    id: "sample-1",
-    pet: { name: "누룽지" },
-    author: { nickname: "룽지맘" },
-    location: "제주도",
-    createdAt: "2025-05-01T00:00:00.000Z",
-    images: [{ url: "/placeholder-image1.png" }],
-  },
-  {
-    id: "sample-2",
-    pet: { name: "숑이" },
-    author: { nickname: "숑맘" },
-    location: "서울",
-    createdAt: "2025-05-01T00:00:00.000Z",
-    images: [{ url: "/placeholder-image2.png" }],
-  },
-  {
-    id: "sample-3",
-    pet: { name: "코코" },
-    author: { nickname: "냥집사" },
-    location: "부산",
-    createdAt: "2025-05-01T00:00:00.000Z",
-    images: [{ url: "/placeholder-image3.png" }],
-  },
-];
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -215,18 +189,6 @@ function TodayFeed({ feed }: { feed: ReturnType<typeof useInfiniteQuery<any>> })
       {posts.map((post: any) => (
         <FeedCard key={post.id} post={post} isLiked={isLiked(post.id)} onToggleLike={() => toggle(post.id)} />
       ))}
-      {!isLoading && !error && posts.length === 0 && (
-        <>
-          {EMPTY_FEED_FALLBACK_POSTS.map((post) => (
-            <FeedCard
-              key={post.id}
-              post={post}
-              isLiked={isLiked(post.id)}
-              onToggleLike={() => toggle(post.id)}
-            />
-          ))}
-        </>
-      )}
 
       {/* 무한 스크롤 sentinel */}
       <div ref={sentinelRef} className="h-4" aria-hidden />

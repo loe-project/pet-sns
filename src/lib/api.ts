@@ -59,7 +59,7 @@ function readLegacyLocalFeedPosts(): FeedPost[] {
 }
 
 function getFallbackFeedPosts(): FeedPost[] {
-  const now = new Date().toISOString();
+  const figmaDate = "2025-05-01T00:00:00.000Z";
   return [
     {
       id: "fallback-1",
@@ -74,9 +74,9 @@ function getFallbackFeedPosts(): FeedPost[] {
         name: "누룽지",
         breed: "믹스",
       },
-      description: "오늘은 제주도에서 신나게 뛰어놀았어요.",
+      description: "오늘 올라온 사진",
       location: "제주도",
-      createdAt: now,
+      createdAt: figmaDate,
       stats: {
         views: 0,
         likes: 0,
@@ -86,18 +86,18 @@ function getFallbackFeedPosts(): FeedPost[] {
       id: "fallback-2",
       author: {
         id: "fallback-author-2",
-        nickname: "숑맘",
+        nickname: "룽지맘",
         profile_image_url: undefined,
         level: 1,
       },
       images: [{ url: "/placeholder-image2.png" }],
       pet: {
-        name: "숑이",
-        breed: "말티즈",
+        name: "누룽지",
+        breed: "믹스",
       },
-      description: "산책 후 간식 타임!",
-      location: "서울",
-      createdAt: now,
+      description: "오늘 올라온 사진",
+      location: "제주도",
+      createdAt: figmaDate,
       stats: {
         views: 0,
         likes: 0,
@@ -107,18 +107,18 @@ function getFallbackFeedPosts(): FeedPost[] {
       id: "fallback-3",
       author: {
         id: "fallback-author-3",
-        nickname: "냥집사",
+        nickname: "룽지맘",
         profile_image_url: undefined,
         level: 1,
       },
       images: [{ url: "/placeholder-image3.png" }],
       pet: {
-        name: "코코",
-        breed: "코리안 숏헤어",
+        name: "누룽지",
+        breed: "믹스",
       },
-      description: "창문 밖 구경하는 코코.",
-      location: "부산",
-      createdAt: now,
+      description: "오늘 올라온 사진",
+      location: "제주도",
+      createdAt: figmaDate,
       stats: {
         views: 0,
         likes: 0,
@@ -162,7 +162,12 @@ export async function fetchFeed(cursor?: string, limit = 20): Promise<FeedRespon
 
   if (error) {
     console.error("fetchFeed error:", error);
-    return { data: [], hasMore: false };
+    const legacyLocalPosts = offset === 0 ? readLegacyLocalFeedPosts() : [];
+    const fallbackPosts = offset === 0 ? getFallbackFeedPosts() : [];
+    return {
+      data: [...legacyLocalPosts, ...fallbackPosts],
+      hasMore: false,
+    };
   }
 
   const feedPosts: FeedPost[] = (posts || []).map((post: any) => ({
